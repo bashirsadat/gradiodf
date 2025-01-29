@@ -103,7 +103,7 @@ This project is licensed under the **MIT License**.
 ## 📬 Contact
 
 👤 **Bashir Sadat**  
-📧 Email: `your-email@example.com`  
+📧 Email: `sadat.sayedbashir@gmail.com`  
 🔗 GitHub: [bashirsadat](https://github.com/bashirsadat)
 
 ---
