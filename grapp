@@ -2,90 +2,103 @@ import gradio as gr
 import pandas as pd
 from rapidfuzz import process  # Fast fuzzy matching library
 
-# Sample DataFrame
-data = {
-    "Term": [
-        "Algorithm", "Data Structure", "Machine Learning", "API", "Big Data",
-        "Neural Network", "Cloud Computing", "Recursion", "Sorting Algorithm", "Hash Table",
-        "Graph Theory", "Binary Search", "Deep Learning", "Quantum Computing", "Cryptography",
-        "Linked List", "Operating System", "Cybersecurity", "Database", "Dynamic Programming"
-    ],
-    "Definition": [
-        "A step-by-step procedure to solve a problem.",
-        "A way to store and organize data efficiently.",
-        "A field of AI that enables computers to learn from data.",
-        "A set of functions that allow applications to communicate.",
-        "Handling large volumes of data beyond traditional processing capabilities.",
-        "A computing system inspired by the human brain.",
-        "Storing and accessing data and services over the internet.",
-        "A function that calls itself directly or indirectly.",
-        "An algorithm that arranges elements in a specified order.",
-        "A data structure that maps keys to values for fast lookups.",
-        "The study of graphs, which are mathematical structures used to model pairwise relations.",
-        "An efficient algorithm for finding an item in a sorted list.",
-        "A branch of AI that deals with neural networks and deep architectures.",
-        "A futuristic field that applies quantum mechanics to computing.",
-        "The practice of securing information and communications.",
-        "A linear data structure where elements are linked using pointers.",
-        "Software that manages computer hardware and software resources.",
-        "The practice of protecting systems and networks from attacks.",
-        "An organized collection of data that can be easily accessed and managed.",
-        "A method for solving complex problems by breaking them into subproblems."
-    ]
-}
+class GradioTermSearch:
+    def __init__(self):
+        """Initialize the app with sample data and UI components."""
+        self.df = self._load_data()
+        self.ui = self._build_ui()
 
-df = pd.DataFrame(data)
+    def _load_data(self):
+        """Loads the sample dataset."""
+        data = {
+            "Term": [
+                "Algorithm", "Data Structure", "Machine Learning", "API", "Big Data",
+                "Neural Network", "Cloud Computing", "Recursion", "Sorting Algorithm", "Hash Table",
+                "Graph Theory", "Binary Search", "Deep Learning", "Quantum Computing", "Cryptography",
+                "Linked List", "Operating System", "Cybersecurity", "Database", "Dynamic Programming"
+            ],
+            "Definition": [
+                "A step-by-step procedure to solve a problem.",
+                "A way to store and organize data efficiently.",
+                "A field of AI that enables computers to learn from data.",
+                "A set of functions that allow applications to communicate.",
+                "Handling large volumes of data beyond traditional processing capabilities.",
+                "A computing system inspired by the human brain.",
+                "Storing and accessing data and services over the internet.",
+                "A function that calls itself directly or indirectly.",
+                "An algorithm that arranges elements in a specified order.",
+                "A data structure that maps keys to values for fast lookups.",
+                "The study of graphs, which are mathematical structures used to model pairwise relations.",
+                "An efficient algorithm for finding an item in a sorted list.",
+                "A branch of AI that deals with neural networks and deep architectures.",
+                "A futuristic field that applies quantum mechanics to computing.",
+                "The practice of securing information and communications.",
+                "A linear data structure where elements are linked using pointers.",
+                "Software that manages computer hardware and software resources.",
+                "The practice of protecting systems and networks from attacks.",
+                "An organized collection of data that can be easily accessed and managed.",
+                "A method for solving complex problems by breaking them into subproblems."
+            ]
+        }
+        return pd.DataFrame(data)
 
-# Function to search and return the most relevant term first + 9 other closest matches
-def search_terms(query):
-    if not query.strip():  # If search box is empty, show the first 10 terms
-        return df.iloc[:10]["Term"].tolist(), df.iloc[:10], df.iloc[0]["Term"]
-    
-    # Find top 10 closest matches to the query
-    matches = process.extract(query, df["Term"].tolist(), limit=10)
-    matched_terms = [match[0] for match in matches]  # Extract term names
-    
-    # Ensure the first match is selected automatically
-    default_selection = matched_terms[0] if matched_terms else None
-    
-    # Filter the DataFrame based on matched terms and reorder it
-    filtered_df = df[df["Term"].isin(matched_terms)].set_index("Term").loc[matched_terms].reset_index()
-    
-    return matched_terms, filtered_df, default_selection
+    def _search_terms(self, query):
+        """Searches for the most relevant term and returns top 10 matches."""
+        if not query.strip():  # If the search box is empty, show the first 10 terms
+            return self.df.iloc[:10]["Term"].tolist(), self.df.iloc[:10], self.df.iloc[0]["Term"]
+        
+        # Find top 10 closest matches to the query
+        matches = process.extract(query, self.df["Term"].tolist(), limit=10)
+        matched_terms = [match[0] for match in matches]  # Extract term names
+        
+        # Ensure the first match is selected automatically
+        default_selection = matched_terms[0] if matched_terms else None
+        
+        # Filter and reorder DataFrame based on matched terms
+        filtered_df = self.df[self.df["Term"].isin(matched_terms)].set_index("Term").loc[matched_terms].reset_index()
+        
+        return matched_terms, filtered_df, default_selection
 
-# Function to fetch term definition
-def get_definition(selected_term):
-    if selected_term in df["Term"].values:
-        row = df[df["Term"] == selected_term].iloc[0]
-        return f'Term: \'{row["Term"]}\'\nDefinition: \'{row["Definition"]}\''
-    return "Select a term to see details."
+    def _get_definition(self, selected_term):
+        """Fetches the definition of the selected term."""
+        if selected_term in self.df["Term"].values:
+            row = self.df[self.df["Term"] == selected_term].iloc[0]
+            return f'Term: \'{row["Term"]}\'\nDefinition: \'{row["Definition"]}\''
+        return "Select a term to see details."
 
-# Gradio Interface
-with gr.Blocks() as demo:
-    gr.Markdown("### Search for a Term and View Its Definition")
-
-    # Search Box
-    search_box = gr.Textbox(label="Search for a Term", placeholder="Type to search...")
-    
-    # Table with up to 10 terms initially
-    data_table = gr.Dataframe(df.iloc[:10], label="Terms & Definitions", interactive=False)
-
-    # Dropdown for selecting terms (default choices: first 10 terms)
-    term_dropdown = gr.Dropdown(choices=df.iloc[:10]["Term"].tolist(), label="Select a Term", allow_custom_value=False)
-
-    # Textbox to display the selected term’s details
-    output_textbox = gr.Textbox(label="Selected Term Details", interactive=False)
-
-    # Function to update dropdown and table dynamically
-    def update_dropdown_and_table(query):
-        matched_terms, filtered_df, default_selection = search_terms(query)
+    def _update_dropdown_and_table(self, query):
+        """Updates the dropdown and table dynamically based on search query."""
+        matched_terms, filtered_df, default_selection = self._search_terms(query)
         return gr.update(choices=matched_terms, value=default_selection), gr.update(value=filtered_df)
 
-    # Update dropdown & table based on search results
-    search_box.change(update_dropdown_and_table, search_box, [term_dropdown, data_table])
+    def _build_ui(self):
+        """Builds the Gradio UI components."""
+        with gr.Blocks() as demo:
+            gr.Markdown("### Search for a Term and View Its Definition")
 
-    # Show details when a term is selected
-    term_dropdown.change(get_definition, term_dropdown, output_textbox)
+            # Search Box
+            search_box = gr.Textbox(label="Search for a Term", placeholder="Type to search...")
 
-# Launch Gradio app
-demo.launch()
+            # Table with up to 10 terms initially
+            data_table = gr.Dataframe(self.df.iloc[:10], label="Terms & Definitions", interactive=False)
+
+            # Dropdown for selecting terms (default choices: first 10 terms)
+            term_dropdown = gr.Dropdown(choices=self.df.iloc[:10]["Term"].tolist(), label="Select a Term", allow_custom_value=False)
+
+            # Textbox to display the selected term’s details
+            output_textbox = gr.Textbox(label="Selected Term Details", interactive=False)
+
+            # Link UI components to functions
+            search_box.change(self._update_dropdown_and_table, search_box, [term_dropdown, data_table])
+            term_dropdown.change(self._get_definition, term_dropdown, output_textbox)
+
+        return demo
+
+    def run(self):
+        """Launches the Gradio app."""
+        self.ui.launch()
+
+# Run the app
+if __name__ == "__main__":
+    app = GradioTermSearch()
+    app.run()
